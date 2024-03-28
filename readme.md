@@ -35,6 +35,9 @@ Ensure you have Python 3.6+ installed, and then set up the environment:
 
 ```bash
 pip install pandas rapidfuzz
+pip install fuzzywuzzy
+pip install python-Levenshtein
+pip install pandas
 ```
 
 ## Usage
