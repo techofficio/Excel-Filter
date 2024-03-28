@@ -1,5 +1,55 @@
 # Advanced Fuzzy Matching Script for Excel Data Filtering
 
+## Key Changes in New filter.py:
+- **Integration of RapidFuzz: The script now uses RapidFuzz for fuzzy string matching, enhancing performance over the previous library.
+- **Separate Thresholds for Mnemonic: A higher matching threshold is set for the Mnemonic column, allowing for more stringent matching requirements compared to other site names.
+- **Parallel Processing: The script utilizes ProcessPoolExecutor for parallel processing of the dataset, aiming to improve execution time on large datasets.
+- **Dynamic Output File Naming: The output filename now includes a timestamp to avoid overwriting previous results and to ensure that each run generates a new file.
+- **Given these changes, here is a suggested README.md structure, including the changelog:
+
+## Features
+
+- **High-Performance Fuzzy Matching**: Utilizes RapidFuzz for fast and accurate string comparisons.
+- **Separate Matching Thresholds**: Implements distinct thresholds for different categories of site names, with stricter criteria for specific key columns like `Mnemonic`.
+- **Parallel Processing**: Speeds up processing on large datasets by employing Python's `ProcessPoolExecutor` for concurrent execution.
+- **Dynamic Output Filenames**: Automatically appends a timestamp to the output file name to preserve all results.
+
+## Changelog from `.old` Version to `filter.py`
+
+### Added
+- Transitioned from a previous string matching library to `RapidFuzz` for enhanced performance and accuracy.
+- Introduced a higher threshold for matches against the `Mnemonic` column, reflecting its importance in matching accuracy.
+- Implemented parallel processing using `ProcessPoolExecutor` to handle large datasets more efficiently.
+- Output filenames now include a timestamp, ensuring uniqueness and traceability of each script execution.
+
+### Changed
+- Revised the fuzzy matching logic to accommodate separate thresholds for different types of site names.
+- Updated the script structure for better readability and maintenance.
+
+### Fixed
+- Resolved issues related to overwriting output files from successive script runs by adopting dynamic file naming.
+
+## Installation
+
+Ensure you have Python 3.6+ installed, and then set up the environment:
+
+```bash
+pip install pandas rapidfuzz
+```
+
+## Usage
+
+Update `site_list_path` and `data_path` variables in the script to point to your Excel files, then run:
+
+```bash
+python filter.py
+```
+
+The script will generate an Excel file containing the filtered dataset based on the specified matching criteria.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 ## Overview
 
 In the realm of data analysis and management, the ability to accurately match and filter data based on similarity rather than exact matches can significantly enhance data quality and insights. This Python script leverages the power of the RapidFuzz library to perform advanced fuzzy string matching on Excel datasets, enabling users to efficiently filter rows that closely match specified criteria.
