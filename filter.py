@@ -1,42 +1,80 @@
 import pandas as pd
 from rapidfuzz import process, fuzz
+from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
+import numpy as np
+import os
 
-# Load the site list
-site_list_path = r"C:\Users\admin\Excel Filter\sites.xlsx"  # Update this path
-site_list_df = pd.read_excel(site_list_path)
+def load_data(site_list_path, data_path):
+    # Load the site list
+    site_list_df = pd.read_excel(site_list_path)
+    # Combine site names into a list
+    site_names = pd.concat([
+        site_list_df['Site Name'].dropna(),
+        site_list_df['Old Name'].dropna()
+    ]).unique().tolist()
 
-# Assuming site_list_df is your site list DataFrame
-# Concatenate the values from 'Site Name' and 'Old Name', then drop duplicates and NaN values
-site_names_combined = pd.concat([
-    site_list_df['Site Name'].dropna(),
-    site_list_df['Old Name'].dropna()
-]).unique().tolist()
+    # Separate list for Mnemonic with a higher matching requirement.
+    mnemonic_names = site_list_df['Mnemonic'].dropna().unique().tolist()
 
-site_names = site_names_combined
+    # Load the data file
+    
+    data_df = pd.read_excel(data_path)
+    return site_names, mnemonic_names, data_df
 
-# Load the data file
-data_path = "C:/Users/admin/Excel Filter/data.xlsx"  # Update this path
-data_df = pd.read_excel(data_path)
-
-# Define the columns in data_df to search against
-search_columns = ['End User Customer', 'End User Parent Account', 'Job Description'] # Adjust these to match the actual column names in your Excel file
-
-# Define a threshold for fuzzy matching (0-100, where 100 is an exact match)
-threshold = 95
-
-# Function to apply fuzzy matching
-def fuzzy_match(row):
+def fuzzy_match(args):
+    row, site_names, mnemonic_names, search_columns, mnemonic_threshold, general_threshold = args
     for column in search_columns:
-        cell_value = str(row[column])  # Ensure the cell value is treated as a string
-  # Use rapidfuzz to perform the fuzzy matching
-        highest = process.extractOne(cell_value, site_names, scorer=fuzz.WRatio, score_cutoff=threshold)
-# If a match with a score above the threshold is found, return True
-        if highest is not None:
-            return True
+        # Check if column exists in the row
+        if column in row.index:
+            cell_value = str(row[column])
+            # Apply separate logic for 'Mnemonic'
+            if column == 'Mnemonic':
+                highest = process.extractOne(cell_value, mnemonic_names, scorer=fuzz.WRatio, score_cutoff=mnemonic_threshold)
+            else:
+                highest = process.extractOne(cell_value, site_names, scorer=fuzz.WRatio, score_cutoff=general_threshold)
+            if highest:
+                return True
+        else:
+            # Optionally, handle the case where the column is missing
+            print(f"Column {column} not found in row.")
     return False
 
-# Correctly applying fuzzy_match function to each row in the DataFrame
-filtered_df = data_df[data_df.apply(fuzzy_match, axis=1)]
+def process_chunk(chunk, site_names, mnemonic_names, search_columns, mnemonic_threshold, general_threshold):
+    # Prepare args for each row in chunk
+    args = [(chunk.iloc[i], site_names, mnemonic_names, search_columns, mnemonic_threshold, general_threshold) for i in range(len(chunk))]
+    
+    # Execute fuzzy matching in parallel
+    with ProcessPoolExecutor() as executor:
+        results = list(executor.map(fuzzy_match, args))
+    
+    # Use results to filter chunk directly
+    return chunk[results]
 
-# Save the filtered dataframe to a new Excel file
-filtered_df.to_excel('filtered_data.xlsx', index=False)
+
+def main():
+    site_list_path = r"C:\Users\admin\Excel Filter\sites.xlsx"
+    data_path = r"C:/Users/admin/Excel Filter/data.xlsx"
+    site_names, mnemonic_names, data_df = load_data(site_list_path, data_path)
+    
+    search_columns = ['End User Customer', 'End User Parent Account', 'Job Description']
+    mnemonic_threshold = 100  # Higher threshold for Mnemonic matches
+    general_threshold = 85   # General threshold for other columns
+    
+    # Assuming data_df is split into manageable chunks for processing
+    chunks = [data_df]  # Example: This should be your actual chunk splitting logic
+    
+    filtered_chunks = [process_chunk(chunk, site_names, mnemonic_names, search_columns, mnemonic_threshold, general_threshold) for chunk in chunks]
+    
+    filtered_df = pd.concat(filtered_chunks)
+    
+    base_file_name = 'filtered_data'
+    output_file_name = base_file_name + '.xlsx'
+    if os.path.exists(output_file_name):
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        output_file_name = f'{base_file_name}_{timestamp}.xlsx'
+    
+    filtered_df.to_excel(output_file_name, index=False)
+
+if __name__ == '__main__':
+    main()
