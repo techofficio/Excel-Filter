@@ -1,5 +1,3 @@
-GPT
-It looks like there was a misunderstanding with the formatting. Here's the section outside of a code block, correctly formatted for Markdown to use directly in your README.md on GitHub:
 
 Advanced Fuzzy Matching Script for Excel Data Filtering
 Overview
