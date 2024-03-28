@@ -32,6 +32,7 @@ Follow the Installation and Usage sections above to integrate this script into y
 - Python 3.6 or newer
 - pandas
 - RapidFuzz
+- (optional FuzzyWuzzy) Requires more time/CPU
 
 ## Installation
 
@@ -69,7 +70,7 @@ Below is an example snippet from `filter.py`. Adjust the file paths and column n
 
 ```python
 import pandas as pd
-from rapidfuzz import process, fuzz
+from rapidfuzz import process, fuzz #otionally use fuzzywuzzy for better logi but requires more resources)
 
 # Load the site list
 site_list_path = r"path_to_your_site_list.xlsx"
